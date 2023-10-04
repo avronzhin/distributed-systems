@@ -1,5 +1,3 @@
-# xmlrpc_server.ipynb
-
 import pickle
 import xmlrpc.client
 import xmlrpc.server
@@ -12,9 +10,18 @@ class RequestHandler(xmlrpc.server.SimpleXMLRPCRequestHandler):
 
 
 server = xmlrpc.server.SimpleXMLRPCServer(("localhost", 8071), requestHandler=RequestHandler)
+stats_server = xmlrpc.client.ServerProxy("http://localhost:8072")
+
+
+def log(event):
+    try:
+        stats_server.log(event)
+    except:
+        print("Stats server not available")
 
 
 def black_list_check(surname):
+    log('black_list_check')
     frame = pd.read_csv('bad_boys2.csv', header=0, sep=',', encoding='utf8')
     exist = any(frame['Surname'] == surname)
     if exist:
@@ -24,6 +31,7 @@ def black_list_check(surname):
 
 
 def black_list_check_by_fullname_and_birth(surname, name, patronym, birth):
+    log('black_list_check_by_fullname_and_birth')
     frame = pd.read_csv('bad_boys2.csv', header=0, sep=',', encoding='utf8')
     if any((frame['Surname'] == surname) & (frame['Patronym'] == patronym) & (frame['Name'] == name) & (
             frame["Birth"] == birth)):
@@ -33,11 +41,13 @@ def black_list_check_by_fullname_and_birth(surname, name, patronym, birth):
 
 
 def send_back_binary(bin_data):
+    log('send_back_binary')
     data = bin_data.data
     return xmlrpc.client.Binary(data)
 
 
 def send_back_inversion(bin_image):
+    log('send_back_inversion')
     img_arr = pickle.loads(bin_image.data)
     height = img_arr.shape[0]
     width = img_arr.shape[1]
@@ -56,6 +66,7 @@ def send_back_inversion(bin_image):
 
 
 def image_binarization_by_limit(bin_image, limit):
+    log('image_binarization_by_limit')
     img_arr = pickle.loads(bin_image.data)
     height = img_arr.shape[0]
     width = img_arr.shape[1]
@@ -74,6 +85,7 @@ def image_binarization_by_limit(bin_image, limit):
 
 
 def rotate_image(bin_image):
+    log('rotate_image')
     img_arr = pickle.loads(bin_image.data)
     height = img_arr.shape[0]
     width = img_arr.shape[1]
