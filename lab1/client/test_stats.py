@@ -2,9 +2,12 @@ import xmlrpc.client
 
 server = xmlrpc.client.ServerProxy("http://localhost:8072")
 
-logs = server.get_by_event('creating event')
+logs = server.get_by_event('creating event3')
 print(logs)
 
-server.log('creating event')
-server.log('creating event2')
-server.log('creating event3')
+logs = server.get_in_period('2023-10-04 22:42:28', '2023-10-04 23:20:25')
+print(logs)
+
+# server.log('creating event')
+# server.log('creating event2')
+# server.log('creating event3')

@@ -3,6 +3,8 @@ import os
 import xmlrpc.server
 from datetime import datetime
 
+import pandas
+
 
 class RequestHandler(xmlrpc.server.SimpleXMLRPCRequestHandler):
     rpc_paths = ('/RPC2',)
@@ -30,21 +32,28 @@ def log(event):
     return True
 
 
-def open_files_in_directory(directory_path, event):
-    result = []
-    for path in glob.glob(os.path.join(directory_path, '*')):
-        with open(path, 'r', encoding='utf-8') as file:
-            for line in file:
-                if line.startswith(event + ','):
-                    result.append(line)
-    return result
+def open_files_in_directory(directory_path):
+    csv_files = glob.glob(directory_path + "/*.csv")
+    all_rows = []
+    for file in csv_files:
+        df = pandas.read_csv(file, header=None)
+        all_rows += df.itertuples(index=False, name=None)
+    return all_rows
 
 
 def get_by_event(event):
-    return open_files_in_directory('logs', event)
+    all_rows = open_files_in_directory('logs')
+    return list(filter(lambda row: row[0] == event, all_rows))
+
+
+def get_in_period(start, end):
+    all_rows = open_files_in_directory('logs')
+    return list(filter(lambda row: end >= row[1] >= start, all_rows))
+
 
 
 server.register_function(log, 'log')
 server.register_function(get_by_event, 'get_by_event')
+server.register_function(get_in_period, 'get_in_period')
 print("Stats server starting. Listening on port 8072...")
 server.serve_forever()
