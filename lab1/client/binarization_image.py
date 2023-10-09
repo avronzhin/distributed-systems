@@ -5,7 +5,7 @@ import matplotlib.pyplot
 from PIL import Image
 from pylab import *
 
-server = xmlrpc.client.ServerProxy("http://localhost:8071")
+server = xmlrpc.client.ServerProxy("http://localhost:8073")
 
 
 def binarizate_image(image_array, limit):

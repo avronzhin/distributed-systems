@@ -24,10 +24,10 @@ def try_fix_log():
         new_file.close()
 
 
-def log(event):
+def log(action_type, start, duration):
     try_fix_log()
     file = open('logs/log.csv', 'a')
-    file.write(str(event) + ',' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n')
+    file.write(str(action_type) + ',' + start + ',' + duration + '\n')
     file.close()
     return True
 
@@ -51,9 +51,14 @@ def get_in_period(start, end):
     return list(filter(lambda row: end >= row[1] >= start, all_rows))
 
 
+def get_by_duration(min_duration, max_duration):
+    all_rows = open_files_in_directory('logs')
+    return list(filter(lambda row: max_duration >= row[2] >= min_duration, all_rows))
+
 
 server.register_function(log, 'log')
 server.register_function(get_by_event, 'get_by_event')
 server.register_function(get_in_period, 'get_in_period')
+server.register_function(get_by_duration, 'get_by_duration')
 print("Stats server starting. Listening on port 8072...")
 server.serve_forever()

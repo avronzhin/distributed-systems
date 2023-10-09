@@ -5,13 +5,13 @@ import matplotlib.pyplot
 from PIL import Image
 from pylab import *
 
-server = xmlrpc.client.ServerProxy("http://localhost:8071")
+server = xmlrpc.client.ServerProxy("http://localhost:8073")
 
 
 def inv_color(image_array):
     pickle_image = pickle.dumps(image_array)
     binary_image = xmlrpc.client.Binary(pickle_image)
-    response = server.color_inversion(binary_image)
+    response = server.send_back_inversion(binary_image)
     inverse_image_array = pickle.loads(response.data)
     return inverse_image_array
 

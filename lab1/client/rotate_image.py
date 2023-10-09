@@ -5,13 +5,13 @@ import matplotlib.pyplot
 from PIL import Image
 from pylab import *
 
-server = xmlrpc.client.ServerProxy("http://localhost:8071")
+server = xmlrpc.client.ServerProxy("http://localhost:8073")
 
 
 def rotate_image(image_array):
     pickle_image = pickle.dumps(image_array)
     binary_image = xmlrpc.client.Binary(pickle_image)
-    response = server.rotate(binary_image)
+    response = server.rotate_image(binary_image)
     rotated_image_array = pickle.loads(response.data)
     return rotated_image_array
 
