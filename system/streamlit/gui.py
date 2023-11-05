@@ -1,56 +1,102 @@
-import xmlrpc.client
+import datetime
+
 import streamlit as st
-import matplotlib.pyplot as plt
 
-stats_server = xmlrpc.client.ServerProxy("http://localhost:8072")
+import date_utils
+import start_server_client as stats
 
-operation_types = stats_server.get_operation_types()
+stats.init()
+if not stats.stats_server_is_available():
+    st.error("Сервис статистики не доступен")
+    st.stop()
 
-st.write(operation_types)
-
+operation_types = stats.get_operation_types()
 st.sidebar.header("Параметры")
 st.sidebar.subheader('Период анализа')
-start_date = st.sidebar.date_input('Начало периода')
-end_date = st.sidebar.date_input('Конец периода')
+today = datetime.datetime.today()
+tomorrow = today + datetime.timedelta(days=1)
+start_date = st.sidebar.date_input('Начало периода', max_value=today, value=today)
+end_date = st.sidebar.date_input('Конец периода (невключительно)', max_value=tomorrow, value=tomorrow)
 interval = st.sidebar.slider('Интервал анализа данных, часы', 1, 4, 24)
-# TODO или свободный ввод или из готовых
-operation = st.sidebar.text_input('Тип операции', max_chars=20)
+options = list(map(lambda it: it["title"], operation_types))
+operation = st.sidebar.selectbox('Тип операции', options=options, index=None, on_change=None)
+st.write("## Аналитика работы веб-сервиса")
+
+if start_date >= end_date:
+    st.error("Выбранный период некорректен. Начало периода должно быть раньше конца периода, как минимум на один день")
+    st.stop()
+
+start_date_timestamp = date_utils.get_timestamp_from_date(start_date)
+end_date_timestamp = date_utils.get_timestamp_from_date(end_date)
+
+# Получить все данные сразу, иначе 24 запроса во 2 задании очень долго
+all_logs = stats.get_logs_in_period_group_by_operation_type(start_date_timestamp, end_date_timestamp)
+logs_group_by_operation = dict()
+for log in all_logs:
+    operation_id = log["operation_type_id"]
+    if operation_id in logs_group_by_operation:
+        logs_group_by_operation[operation_id].append(log)
+    else:
+        logs = list()
+        logs.append(log)
+        logs_group_by_operation[operation_id] = logs
+
+# Количество вызовов
+data = {}
+for operation_id in logs_group_by_operation.keys():
+    operation_type = list(filter(lambda it: it["id"] == operation_id, operation_types))[0]["title"]
+    data[operation_type] = len(logs_group_by_operation[operation_id])
+st.subheader("Количество вызовов по типу операции")
+st.bar_chart(data)
 
 
-st.write("""
-# Аналитика работы веб-сервиса
-""")
+# Количество вызовов по времени
+if operation is None:
+    st.subheader("Количество вызовов по времени для всех типов операций")
+else:
+    st.subheader("Количество вызовов по времени для типа операции '{}'".format(operation))
 
-# Валидация данных
-# Период хотябы один день
-params_valid = True
+days = list()
+day = start_date
+while day < end_date:
+    days.append(day)
+    day = day + datetime.timedelta(days=1)
 
-if params_valid:
-    # TODO Получить из базы данные все логи за период
-    logs = stats_server.get_in_period(1699199985, 1699499448)
-    st.write(logs)
-    # TODO Количетсово логов для каждого типа
-    # гистограмму по количеству вызовов для типа операции (горизонтальной ось гистограммы – типы операций, вертикальная ось – количество вызовов).
-    st.subheader("Количетство вызовов по типу операции")
-    data = {'jack': 4098, 'sape': 4139}
+interval_timestamp = interval * 60 * 60
+days_timestamps = list()
+for day in days:
+    next_day = day + datetime.timedelta(days=1)
+    next_day_timestamp = date_utils.get_timestamp_from_date(next_day)
+    day_timestamp = date_utils.get_timestamp_from_date(day)
+    day_timestamps = list()
+    while day_timestamp < next_day_timestamp:
+        day_timestamps.append(day_timestamp)
+        day_timestamp = day_timestamp + interval_timestamp
+    days_timestamps.append(day_timestamps)
+
+for day_timestamps in days_timestamps:
+    day_timestamp = day_timestamps[0]
+    day_date = date_utils.get_date_from_timestamp(day_timestamp).date()
+    st.subheader(day_date)
+    data = {}
+    for timestamp in day_timestamps:
+        next_timestamp = timestamp + interval_timestamp
+        # TODO из всех логов достать те который в этих интервалах
+        #count = stats.get_count_in_period_by_operation_type(timestamp, next_timestamp, operation_types[1]["title"])
+        # date = date_utils.get_date_from_timestamp(timestamp)
+        # data[str(date)] = count
+    # print(data)
     # st.bar_chart(data)
+# гистограмму по количеству вызова для типов операций на сутки (горизонтальная ось гистограммы – время 00:00-24:00 с заданными интервалом «slider» группировки, вертикальная ось – количество вызовов). Если тип операции «text_input» задан, то гистограмма строится для заданного типа операции, иначе – для всех.
 
-    # TODO Если есть тип то взять тольго его логи
-    # TODO Разбить на каждые сутки и на каждый периоды
-    # гистограмму по количеству вызова для типов операций на сутки (горизонтальная ось гистограммы – время 00:00-24:00 с заданными интервалом «slider» группировки, вертикальная ось – количество вызовов). Если тип операции «text_input» задан, то гистограмма строится для заданного типа операции, иначе – для всех.
-    # if operation != "":
-    #     st.subheader("Количество вызовов на сутки для типа операции '{}'".format(operation))
-    # else:
-    #     st.subheader("Количество вызовов на сутки для всех типов операций")
 
-    # круговую диаграмму по количеству вызовов типа операции (размер сектора типа пропорционален количеству вызовов типа операции).
+# круговую диаграмму по количеству вызовов типа операции (размер сектора типа пропорционален количеству вызовов типа операции).
 
-    labels = ["a", "b", "c", "d"]
-    sizes = [15, 30, 45, 10]
+# labels = ["a", "b", "c", "d"]
+# sizes = [15, 30, 45, 10]
+#
+# fig, ax = plt.subplots()
+# ax.pie(sizes, labels=labels)
+# st.pyplot(fig)
 
-    fig, ax = plt.subplots()
-    ax.pie(sizes, labels=labels)
-    st.pyplot(fig)
-
-    # TODO Длительности логов, взять среднее время для каждого типа
-    # построить круговую диаграмму по времени вызовов типа операции (размер сектора типа пропорционален времени выполнения типа операции).
+# построить круговую диаграмму по времени вызовов типа операции (размер сектора типа пропорционален времени выполнения типа операции).
