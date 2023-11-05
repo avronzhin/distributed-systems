@@ -13,10 +13,11 @@ stats_server = xmlrpc.client.ServerProxy("http://localhost:8072")
 
 
 def proxy(action, action_type, args):
-    start = datetime.now()
+    start = datetime.now().timestamp()
     result = action(*args)
-    duration = datetime.now() - start
-    stats_server.log(action_type, start.strftime("%Y-%m-%d %H:%M:%S"), str(duration.seconds))
+    end = datetime.now().timestamp()
+    duration = (end - start) * 1000
+    stats_server.log(action_type, int(start), int(duration))
     return result
 
 

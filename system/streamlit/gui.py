@@ -1,13 +1,19 @@
+import xmlrpc.client
 import streamlit as st
 import matplotlib.pyplot as plt
 
-# TODO загрузка всех типов
+stats_server = xmlrpc.client.ServerProxy("http://localhost:8072")
+
+operation_types = stats_server.get_operation_types()
+
+st.write(operation_types)
 
 st.sidebar.header("Параметры")
 st.sidebar.subheader('Период анализа')
 start_date = st.sidebar.date_input('Начало периода')
 end_date = st.sidebar.date_input('Конец периода')
 interval = st.sidebar.slider('Интервал анализа данных, часы', 1, 4, 24)
+# TODO или свободный ввод или из готовых
 operation = st.sidebar.text_input('Тип операции', max_chars=20)
 
 
@@ -21,7 +27,8 @@ params_valid = True
 
 if params_valid:
     # TODO Получить из базы данные все логи за период
-
+    logs = stats_server.get_in_period(1699199985, 1699499448)
+    st.write(logs)
     # TODO Количетсово логов для каждого типа
     # гистограмму по количеству вызовов для типа операции (горизонтальной ось гистограммы – типы операций, вертикальная ось – количество вызовов).
     st.subheader("Количетство вызовов по типу операции")
