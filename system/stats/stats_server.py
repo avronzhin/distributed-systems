@@ -60,7 +60,8 @@ def create_table():
     cursor.close()
     conn.close()
 
-
+# UNIX time
+#
 create_table()
 server.register_function(log, 'log')
 server.register_function(get_by_event, 'get_by_event')
