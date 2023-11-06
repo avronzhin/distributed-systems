@@ -28,13 +28,3 @@ def get_logs_in_period_group_by_operation_type(start_date, end_date):
     rows = stats_server.get_in_period(start_date, end_date)
     result = list(map(lambda row: {"operation_type_id": row[1], "created": row[2], "duration": row[3]}, rows))
     return result
-
-
-def get_count_in_period_group_by_operation_type(start_date, end_date):
-    result = stats_server.get_count_in_period_group_by_operation_type(start_date, end_date)
-    result = list(map(lambda it: {"id": it[0], "count": it[1]}, result))
-    return result
-
-
-def get_count_in_period_by_operation_type(start_date, end_date, operation_type):
-    return stats_server.get_count_in_period_by_operation_type(start_date, end_date, operation_type)

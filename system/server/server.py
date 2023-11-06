@@ -80,7 +80,7 @@ def rotate_image(bin_image):
             for j in range(width):
                 for k in range(3):
                     temp = img_arr[i][j][k]
-                    img_arr[i][j][k] = img_arr[height - i -1][j][k]
+                    img_arr[i][j][k] = img_arr[height - i - 1][j][k]
                     img_arr[height - i - 1][j][k] = temp
     else:
         for i in range(height // 2):
