@@ -74,12 +74,12 @@ def get_by_operation_type(operation_type_id):
 
 
 def get_in_period(start_date, end_date):
-    sql = "SELECT * FROM logs WHERE created >= ? AND created <= ?"
+    sql = "SELECT * FROM logs WHERE created >= ? AND created < ?"
     return execute_query_and_get_rows(sql, (start_date, end_date))
 
 
 def get_by_duration(min_duration, max_duration):
-    sql = "SELECT * FROM logs WHERE duration >= ? AND duration <= ?"
+    sql = "SELECT * FROM logs WHERE duration >= ? AND duration < ?"
     return execute_query_and_get_rows(sql, (min_duration, max_duration))
 
 
@@ -92,7 +92,7 @@ def get_count_in_period_group_by_operation_type(start_date, end_date):
     sql = '''
         SELECT operation_type_id, count(*) AS 'count' 
             FROM logs 
-            WHERE created >= ? AND created <= ? 
+            WHERE created >= ? AND created < ? 
             GROUP BY operation_type_id
         '''
     return execute_query_and_get_rows(sql, (start_date, end_date))
@@ -103,7 +103,7 @@ def get_count_in_period_by_operation_type(start_date, end_date, operation_type):
     sql = '''
             SELECT count(*) AS 'count' 
                 FROM logs 
-                WHERE operation_type_id = ? AND created >= ? AND created <= ?
+                WHERE operation_type_id = ? AND created >= ? AND created < ?
             '''
     return execute_query_and_get_rows(sql, (operation_type_id, start_date, end_date))[0]
 
