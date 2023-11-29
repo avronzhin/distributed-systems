@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 import date_utils
 import logs_utils
-import start_server_client as stats
+import statistic_client as stats
 
 stats.init()
 if not stats.stats_server_is_available():
